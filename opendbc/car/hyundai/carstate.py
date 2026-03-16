@@ -133,6 +133,7 @@ class CarState(CarStateBase):
     # TODO: Find brake pressure
     ret.brake = 0
     ret.brakePressed = cp.vl["TCS13"]["DriverOverride"] == 2  # 2 includes regen braking by user on HEV/EV
+    ret.brakeLightsDEPRECATED = bool(cp.vl["TCS13"]["BrakeLight"]) if "BrakeLight" in cp.vl["TCS13"] else ret.brakePressed
     ret.brakeHoldActive = cp.vl["TCS15"]["AVH_LAMP"] == 2  # 0 OFF, 1 ERROR, 2 ACTIVE, 3 READY
     ret.parkingBrake = cp.vl["TCS13"]["PBRAKE_ACT"] == 1
     ret.espDisabled = cp.vl["TCS11"]["TCS_PAS"] == 1
@@ -219,6 +220,8 @@ class CarState(CarStateBase):
       ret.gasPressed = bool(cp.vl[self.accelerator_msg_canfd]["ACCELERATOR_PEDAL_PRESSED"])
 
     ret.brakePressed = cp.vl["TCS"]["DriverBraking"] == 1
+    ret.brake = float(cp.vl["TCS"]["BRAKE_PRESSURE"]) if "BRAKE_PRESSURE" in cp.vl["TCS"] else 0
+    ret.brakeLightsDEPRECATED = ret.brakePressed or ret.brake > 1e-3
 
     ret.doorOpen = cp.vl["DOORS_SEATBELTS"]["DRIVER_DOOR"] == 1
     ret.seatbeltUnlatched = cp.vl["DOORS_SEATBELTS"]["DRIVER_SEATBELT"] == 0
