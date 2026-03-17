@@ -205,6 +205,7 @@ struct CarState {
   vehicleSensorsInvalid @52 :Bool;  # invalid steering angle readings, etc.
   lowSpeedAlert @56 :Bool;  # lost steering control due to a dynamic min steering speed
   blockPcmEnable @60 :Bool;  # whether to allow PCM to enable this frame
+  tpms @61 :Tpms;
 
   # cruise state
   cruiseState @10 :CruiseState;
@@ -232,6 +233,13 @@ struct CarState {
 
   struct WheelSpeeds {
     # optional wheel speeds
+    fl @0 :Float32;
+    fr @1 :Float32;
+    rl @2 :Float32;
+    rr @3 :Float32;
+  }
+
+  struct Tpms {
     fl @0 :Float32;
     fr @1 :Float32;
     rl @2 :Float32;

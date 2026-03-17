@@ -63,6 +63,20 @@ class CarState(CarStateBase):
 
     self.params = CarControllerParams(CP)
 
+  def _update_tpms(self, ret: structs.CarState, cp) -> None:
+    if "TPMS11" not in cp.vl:
+      return
+
+    tpms = cp.vl["TPMS11"]
+    required_signals = ("PRESSURE_FL", "PRESSURE_FR", "PRESSURE_RL", "PRESSURE_RR")
+    if not all(sig in tpms for sig in required_signals):
+      return
+
+    ret.tpms.fl = float(tpms["PRESSURE_FL"])
+    ret.tpms.fr = float(tpms["PRESSURE_FR"])
+    ret.tpms.rl = float(tpms["PRESSURE_RL"])
+    ret.tpms.rr = float(tpms["PRESSURE_RR"])
+
   def recent_button_interaction(self) -> bool:
     # On some newer model years, the CANCEL button acts as a pause/resume button based on the PCM state
     # To avoid re-engaging when openpilot cancels, check user engagement intention via buttons
@@ -92,6 +106,7 @@ class CarState(CarStateBase):
       cp.vl["WHL_SPD11"]["WHL_SPD_RL"],
       cp.vl["WHL_SPD11"]["WHL_SPD_RR"],
     )
+    self._update_tpms(ret, cp)
     ret.standstill = cp.vl["WHL_SPD11"]["WHL_SPD_FL"] <= STANDSTILL_THRESHOLD and cp.vl["WHL_SPD11"]["WHL_SPD_RR"] <= STANDSTILL_THRESHOLD
 
     self.cluster_speed_counter += 1
@@ -236,6 +251,7 @@ class CarState(CarStateBase):
       cp.vl["WHEEL_SPEEDS"]["WHL_SpdRLVal"],
       cp.vl["WHEEL_SPEEDS"]["WHL_SpdRRVal"],
     )
+    self._update_tpms(ret, cp)
     ret.standstill = cp.vl["WHEEL_SPEEDS"]["WHL_SpdFLVal"] <= STANDSTILL_THRESHOLD and cp.vl["WHEEL_SPEEDS"]["WHL_SpdFRVal"] <= STANDSTILL_THRESHOLD and \
                      cp.vl["WHEEL_SPEEDS"]["WHL_SpdRLVal"] <= STANDSTILL_THRESHOLD and cp.vl["WHEEL_SPEEDS"]["WHL_SpdRRVal"] <= STANDSTILL_THRESHOLD
 
