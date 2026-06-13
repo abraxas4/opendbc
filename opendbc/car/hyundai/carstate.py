@@ -200,6 +200,11 @@ class CarState(CarStateBase):
       self.low_speed_alert = False
     ret.lowSpeedAlert = self.low_speed_alert
 
+    ret.tpms.fl = cp.vl["TPMS11"]["PRESSURE_FL"]
+    ret.tpms.fr = cp.vl["TPMS11"]["PRESSURE_FR"]
+    ret.tpms.rl = cp.vl["TPMS11"]["PRESSURE_RL"]
+    ret.tpms.rr = cp.vl["TPMS11"]["PRESSURE_RR"]
+
     return ret
 
   def update_canfd(self, can_parsers) -> structs.CarState:
