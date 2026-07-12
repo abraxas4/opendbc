@@ -4,10 +4,11 @@ import unittest
 
 from opendbc.car.hyundai.values import HyundaiSafetyFlags
 from opendbc.car.structs import CarParams
+from opendbc.safety import ALTERNATIVE_EXPERIENCE
 from opendbc.safety.tests.libsafety import libsafety_py
 import opendbc.safety.tests.common as common
 from opendbc.safety.tests.common import CANPackerSafety
-from opendbc.safety.tests.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBase
+from opendbc.safety.tests.hyundai_common import Buttons, HyundaiButtonBase, HyundaiLongitudinalBase, PREV_BUTTON_SAMPLES
 
 
 # 4 bit checkusm used in some hyundai messages
@@ -145,6 +146,47 @@ class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
     self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(CarParams.SafetyModel.hyundai, HyundaiSafetyFlags.CAMERA_SCC)
     self.safety.init_tests()
+
+
+class TestHyundaiSafetyAlwaysOnLateral(TestHyundaiSafety):
+  def setUp(self):
+    self.packer = CANPackerSafety("hyundai_can_generated")
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(CarParams.SafetyModel.hyundai, 0)
+    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.ALWAYS_ON_LATERAL)
+    self.safety.init_tests()
+
+  def test_controls_allowed_without_cruise(self):
+    self.assertFalse(self.safety.get_controls_allowed())
+    self._rx(self._pcm_status_msg(False))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_controls_allowed_without_button_press(self):
+    for _ in range(PREV_BUTTON_SAMPLES * 2):
+      self._rx(self._button_msg(Buttons.NONE))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_allow_user_brake_at_zero_speed(self):
+    self._rx(self._vehicle_moving_msg(0))
+    self._rx(self._user_brake_msg(0))
+    self.safety.set_controls_allowed(1)
+
+    self._rx(self._user_brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    self._rx(self._user_brake_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+  def test_not_disengage_on_brake_when_moving(self):
+    self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
+    self._rx(self._user_brake_msg(0))
+    self.safety.set_controls_allowed(1)
+
+    self._rx(self._user_brake_msg(1))
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    self._rx(self._user_brake_msg(0))
+    self.assertTrue(self.safety.get_controls_allowed())
 
 
 class TestHyundaiSafetyFCEV(TestHyundaiSafety):

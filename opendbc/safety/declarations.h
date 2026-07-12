@@ -321,6 +321,10 @@ extern CurvatureSteeringState curvature_state;
 // This flag allows AEB to be commanded from openpilot.
 #define ALT_EXP_ALLOW_AEB 16
 
+// FrogPilot / abraxas4: Always On Lateral — keep controls_allowed without stock cruise engage.
+// Used by hyundai safety and generic brake/regen disengage exemptions.
+#define ALT_EXP_ALWAYS_ON_LATERAL 32
+
 extern int alternative_experience;
 
 // time since safety mode has been changed

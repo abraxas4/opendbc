@@ -44,6 +44,10 @@ bool hyundai_alt_limits_2 = false;
 
 static uint8_t hyundai_last_button_interaction;  // button messages since the user pressed an enable button
 
+static bool hyundai_always_on_lateral(void) {
+  return GET_FLAG(alternative_experience, ALT_EXP_ALWAYS_ON_LATERAL);
+}
+
 void hyundai_common_init(uint16_t param) {
   const uint16_t HYUNDAI_PARAM_EV_GAS = 1;
   const uint16_t HYUNDAI_PARAM_HYBRID_GAS = 2;
@@ -72,6 +76,13 @@ void hyundai_common_init(uint16_t param) {
 }
 
 void hyundai_common_cruise_state_check(const bool cruise_engaged) {
+  // AOL: allow lateral control without stock cruise engage
+  if (hyundai_always_on_lateral()) {
+    controls_allowed = true;
+    cruise_engaged_prev = cruise_engaged;
+    return;
+  }
+
   // some newer HKG models can re-enable after spamming cancel button,
   // so keep track of user button presses to deny engagement if no interaction
 
@@ -93,6 +104,13 @@ void hyundai_common_cruise_buttons_check(const int cruise_button, const bool mai
     hyundai_last_button_interaction = 0U;
   } else {
     hyundai_last_button_interaction = SAFETY_MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
+  }
+
+  // AOL: keep controls_allowed without SET/RESUME edge
+  if (hyundai_always_on_lateral()) {
+    controls_allowed = true;
+    cruise_button_prev = cruise_button;
+    return;
   }
 
   if (hyundai_longitudinal) {

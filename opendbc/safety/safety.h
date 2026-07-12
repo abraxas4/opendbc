@@ -349,16 +349,19 @@ static void relay_malfunction_set(void) {
 }
 
 static void generic_rx_checks(void) {
+  const bool always_on_lateral = GET_FLAG(alternative_experience, ALT_EXP_ALWAYS_ON_LATERAL);
+
   gas_pressed_prev = gas_pressed;
 
   // exit controls on rising edge of brake press
-  if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
+  // AOL: do not clear controls_allowed on brake/regen (lateral stays available)
+  if (!always_on_lateral && brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
     controls_allowed = false;
   }
   brake_pressed_prev = brake_pressed;
 
   // exit controls on rising edge of regen paddle
-  if (regen_braking && (!regen_braking_prev || vehicle_moving)) {
+  if (!always_on_lateral && regen_braking && (!regen_braking_prev || vehicle_moving)) {
     controls_allowed = false;
   }
   regen_braking_prev = regen_braking;
